@@ -1,0 +1,240 @@
+
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NS AI – Учи умно</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f2f5ff;color:#202b46}
+header{background:linear-gradient(130deg,#1748c7,#7545df);color:white;padding:24px;border-radius:0 0 25px 25px}
+header h1{font-size:30px;margin:0}
+main{max-width:650px;margin:auto;padding:18px}
+.card{background:white;border-radius:17px;padding:19px;margin:14px 0;box-shadow:0 3px 14px #1d347012}
+h2{margin-top:5px}
+button,select,input{font-size:16px;border-radius:11px;padding:13px;width:100%;margin:6px 0;border:1px solid #dce2f1}
+button{background:#3869e8;color:white;border:0;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.45}
+.option{background:#f0f3fc;color:#24314d;border:2px solid #e0e5f2;text-align:left}
+.option.selected{border-color:#3869e8;background:#e7edff}
+.secondary{background:#e9edfa;color:#273658}
+.small{color:#71809b;font-size:13px}
+.stat{display:inline-block;padding:10px;background:#f0f3ff;border-radius:12px;margin:4px}
+.hidden{display:none}
+#feedback{padding:14px;border-radius:12px;margin-top:12px}
+</style>
+</head>
+<body>
+<header>
+<h1>🧠 NS AI</h1>
+<p>Твоят умен партньор в ученето</p>
+<div>💎 <span id="diamonds">0</span> &nbsp; 🔥 <span id="streak">0</span> дни</div>
+</header>
+<main>
+<section id="setup" class="card">
+<h2>👋 Добре дошъл в NS AI!</h2>
+<label>Твоето име</label>
+<input id="name" placeholder="Напиши името си">
+<label>Език</label>
+<select id="language">
+<option>Български</option><option>English</option>
+<option>Руски</option><option>Китайски</option>
+<option>Френски</option><option>Португалски</option>
+<option>Немски</option><option>Испански</option>
+</select>
+<label>Избери клас</label>
+<select id="grade">
+<option value="1">1. клас</option>
+<option value="2">2. клас</option>
+<option value="3">3. клас</option>
+<option value="4">4. клас</option>
+<option value="5">5. клас</option>
+<option value="6">6. клас</option>
+<option value="7" selected>7. клас</option>
+<option value="8">8. клас</option>
+<option value="9">9. клас</option>
+<option value="10">10. клас</option>
+<option value="11">11. клас</option>
+<option value="12">12. клас</option>
+</select>
+<label>Предмет</label>
+<select id="subject">
+<option>Математика</option>
+<option>Български език</option>
+<option>Английски език</option>
+<option>История</option>
+<option>География</option>
+<option>Биология</option>
+<option>Физика</option>
+<option>Химия</option>
+<option>Информатика</option>
+</select>
+<label>Трудност</label>
+<select id="difficulty">
+<option>Лесно</option>
+<option>Средно</option>
+<option>Трудно</option>
+<option selected>Експерт</option>
+</select>
+<button onclick="start()">🚀 Създай профил</button>
+</section>
+
+<section id="menu" class="hidden">
+<div class="card">
+<h2 id="welcome">Здравей!</h2>
+<p id="profile" class="small"></p>
+<div class="stat">💎 <span id="balance">0</span></div>
+<div class="stat">🏆 <span id="points">0</span> верни</div>
+</div>
+<div class="card">
+<h2>📚 Какво ще правим днес?</h2>
+<button onclick="beginQuiz()">✏️ Започни тест</button>
+<button class="secondary" onclick="showCards()">🗂️ Флашкарти</button>
+<button class="secondary" onclick="showProgress()">🏆 Моят напредък</button>
+<button class="secondary" onclick="showProfile()">👤 Моят профил</button>
+</div>
+</section>
+
+<section id="quiz" class="hidden card">
+<button class="secondary" onclick="goHome()">⌂ Начално меню</button>
+<p class="small" id="topic"></p>
+<p id="counter"></p>
+<h2 id="question"></h2>
+<div id="answers"></div>
+<input id="written" class="hidden" placeholder="Напиши отговора си">
+<button id="check" onclick="checkAnswer()" disabled>Провери отговора</button>
+<div id="feedback" class="hidden"></div>
+<button id="next" class="hidden" onclick="nextQuestion()">Следващ въпрос →</button>
+</section>
+
+<section id="extra" class="hidden card">
+<div id="extraContent"></div>
+<button onclick="goHome()">⌂ Начално меню</button>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let user={},questions=[],index=0,answer="",checked=false;
+let diamonds=0,points=0,correctCount=0;
+const bank={
+"7|Математика|Експерт":[
+{topic:"Рационални числа",q:"Изчисли: −18 + 3 × (7 − 12)",a:["-33"],ex:"Първо скобите: 7 − 12 = −5. После 3 × (−5) = −15. Накрая −18 − 15 = −33.",rev:"Ред на действията и умножение на отрицателни числа."},
+{topic:"Дроби",q:"Колко е 5/6 − 3/8?",a:["11/24"],ex:"Общ знаменател 24: 20/24 − 9/24 = 11/24.",rev:"Намиране на общ знаменател и изваждане на дроби."},
+{topic:"Проценти",q:"Цена от 240 лв. е намалена с 15%. Колко е новата цена?",a:["204","204 лв"],ex:"15% от 240 са 36 лв. 240 − 36 = 204 лв.",rev:"Намиране на процент от число."},
+{topic:"Уравнения",q:"Реши: 3(x − 2) + 4 = 2x + 9. Колко е x?",a:["11"],ex:"3x − 6 + 4 = 2x + 9. Следователно x = 11.",rev:"Разкриване на скоби и решаване на линейни уравнения."},
+{topic:"Геометрия",q:"Два ъгъла в триъгълник са 48° и 67°. Колко е третият?",a:["65","65°"],ex:"180° − 48° − 67° = 65°.",rev:"Сбор на вътрешните ъгли на триъгълник."},
+{topic:"Текстова задача",q:"Книга има 180 страници. Мария прочита 2/5 от нея, а после още 36 страници. Колко остават?",a:["72","72 страници"],ex:"2/5 от 180 = 72. После 180 − 72 − 36 = 72.",rev:"Намиране на дроб от число и текстови задачи."}
+],
+"7|Математика|Лесно":[
+{topic:"Умножение",q:"Колко е 7 × 8?",a:["56"],ex:"7 × 8 = 56.",rev:"Таблица за умножение."},
+{topic:"Събиране",q:"Колко е 145 + 78?",a:["223"],ex:"145 + 78 = 223.",rev:"Събиране на естествени числа."}
+],
+"7|Математика|Средно":[
+{topic:"Дроби",q:"Колко е 1/4 + 2/4?",a:["3/4"],ex:"Събираме числителите: 3/4.",rev:"Събиране на дроби."},
+{topic:"Проценти",q:"Колко е 25% от 200?",a:["50"],ex:"200 ÷ 4 = 50.",rev:"Намиране на процент от число."}
+],
+"7|Математика|Трудно":[
+{topic:"Дроби",q:"Колко е 3/4 от 80?",a:["60"],ex:"80 × 3/4 = 60.",rev:"Умножение на дроб с число."},
+{topic:"Уравнения",q:"Реши: 2x + 9 = 25.",a:["8"],ex:"2x = 16, следователно x = 8.",rev:"Линейни уравнения."}
+]
+};
+function save(){
+localStorage.setItem("nsai",JSON.stringify({user,diamonds,points,correctCount}));
+}
+function start(){
+user={name:$("name").value.trim()||"Ученик",language:$("language").value,grade:$("grade").value,subject:$("subject").value,difficulty:$("difficulty").value};
+save();goHome();
+}
+function hideAll(){
+["setup","menu","quiz","extra"].forEach(x=>$(x).classList.add("hidden"));
+}
+function goHome(){
+hideAll();$("menu").classList.remove("hidden");
+$("welcome").textContent="Здравей, "+user.name+"! 👋";
+$("profile").textContent=user.grade+". клас • "+user.subject+" • "+user.difficulty;
+$("balance").textContent=diamonds;$("points").textContent=points;
+}
+function beginQuiz(){
+let key=user.grade+"|"+user.subject+"|"+user.difficulty;
+questions=bank[key]||[];
+if(!questions.length){
+alert("Въпросите за този клас, предмет и трудност предстои да бъдат добавени. Избери 7. клас и Математика за демонстрацията.");
+return;
+}
+index=0;correctCount=0;
+hideAll();$("quiz").classList.remove("hidden");render();
+}
+function render(){
+checked=false;answer="";
+let q=questions[index];
+$("topic").textContent="ТЕМА: "+q.topic.toUpperCase();
+$("counter").textContent="Въпрос "+(index+1)+" от "+questions.length;
+$("question").textContent=q.q;
+$("feedback").classList.add("hidden");
+$("next").classList.add("hidden");
+$("check").classList.remove("hidden");$("check").disabled=true;
+$("written").value="";
+$("written").classList.add("hidden");
+$("answers").innerHTML="";
+if(q.a.length){
+$("written").classList.remove("hidden");
+$("written").oninput=()=>{$("check").disabled=!$("written").value.trim()};
+}else{}
+if(q.options){
+q.options.forEach((o,i)=>{
+let b=document.createElement("button");
+b.className="option";b.textContent=o;
+b.onclick=()=>{if(checked)return;answer=o;
+document.querySelectorAll(".option").forEach(x=>x.classList.remove("selected"));
+b.classList.add("selected");$("check").disabled=false};
+$("answers").appendChild(b);
+});
+}
+}
+function norm(s){return s.toLowerCase().trim().replace(/\s/g,"").replace(",",".").replace(/лв\.?/g,"").replace(/°/g,"")}
+function checkAnswer(){
+if(checked)return;
+let q=questions[index];
+if($("written").classList.contains("hidden")===false)answer=$("written").value.trim();
+if(!answer)return;
+checked=true;
+let ok=q.a.some(a=>norm(a)===norm(answer));
+if(ok){diamonds+=2;points++;correctCount++;}
+$("check").classList.add("hidden");
+$("feedback").classList.remove("hidden");
+$("feedback").style.background=ok?"#e0f8e9":"#fff0dc";
+$("feedback").innerHTML=ok?
+"<b>🎉 Правилен отговор! +2 💎</b><p>"+q.ex+"</p>":
+"<b>💡 Нека преговорим!</b><p>Правилен отговор: "+q.a[0]+"</p><b>📚 Преговори:</b><p>"+q.rev+"</p><p>"+q.ex+"</p>";
+$("next").classList.remove("hidden");
+save();
+}
+function nextQuestion(){
+index++;
+if(index>=questions.length){
+hideAll();$("extra").classList.remove("hidden");
+$("extraContent").innerHTML="<h2>🏆 Тестът приключи!</h2><h1>"+correctCount+" / "+questions.length+"</h1><p>Верни отговори</p><h2>💎 "+diamonds+"</h2><button onclick='beginQuiz()'>Нов тест</button>";
+return;
+}
+render();
+}
+function showCards(){
+hideAll();$("extra").classList.remove("hidden");
+$("extraContent").innerHTML="<h2>🗂️ Флашкарти</h2><p>Въпрос: Какво е процент?</p><button onclick=\"document.getElementById('cardanswer').classList.toggle('hidden')\">Покажи отговора</button><p id='cardanswer' class='hidden'>Процентът е една стотна част от цялото.</p>";
+}
+function showProgress(){
+hideAll();$("extra").classList.remove("hidden");
+$("extraContent").innerHTML="<h2>🏆 Моят напредък</h2><h1>💎 "+diamonds+"</h1><p>Общо верни отговори: "+points+"</p>";
+}
+function showProfile(){
+hideAll();$("extra").classList.remove("hidden");
+$("extraContent").innerHTML="<h2>👤 Моят профил</h2><p>"+user.name+"</p><p>"+user.grade+". клас</p><p>"+user.subject+"</p><p>"+user.difficulty+"</p><button onclick='localStorage.removeItem(\"nsai\");location.reload()'>Изтрий профила</button>";
+}
+$("check").onclick=checkAnswer;
+const saved=localStorage.getItem("nsai");
+if(saved){try{let s=JSON.parse(saved);user=s.user;diamonds=s.diamonds||0;points=s.points||0;correctCount=s.correctCount||0;if(user&&user.grade)goHome();}catch(e){}}
+</script>
+</body>
+  </html>
+  
